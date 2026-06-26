@@ -102,12 +102,13 @@ cd WindroseRCON
 
 1. Download `WindroseRCON-Complete-v1.0.0.zip` from the `BuildZips` folder or GitHub releases.
 2. Make sure UE4SS is installed in your Windrose server (`dwmapi.dll` and the `ue4ss` folder in `R5\Binaries\Win64\`).
-3. Extract the zip anywhere on your server machine. It contains the mod folder, install script, and settings.
-4. From your **Windrose server root** (the folder that contains `R5\Binaries\Win64\ue4ss`), run:
-   ```powershell
-   .\path\to\extracted\WindroseRCON\install.ps1
+3. Extract the zip directly into your **Windrose server root** (the folder that contains `R5\`). The zip contains the correct folder structure:
    ```
-   The script copies the mod folder and `windrose_rcon.dll` to `R5\Binaries\Win64\ue4ss\Mods\WindroseRCON\`.
+   R5\Binaries\Win64\ue4ss\Mods\WindroseRCON\      (mod folder with DLL and scripts)
+   R5\Binaries\Win64\ue4ss\UE4SS-settings.ini     (Windrose-safe UE4SS settings)
+   ```
+4. Enable the mod in UE4SS:
+   - Add `WindroseRCON : 1` to `R5\Binaries\Win64\ue4ss\Mods\mods.txt` or add it to `mods.json` with `"mod_enabled": true`.
 5. Edit the mod config:
    - Open `R5\Binaries\Win64\ue4ss\Mods\WindroseRCON\Scripts\config_user.lua`.
    - Set a strong `admin.password`. This is required for all admin commands.

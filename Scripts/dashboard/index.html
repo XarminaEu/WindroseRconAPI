@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WindroseRCON Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login" class="login-container">
+        <div class="login-card">
+            <h1>WindroseRCON</h1>
+            <p>Admin Dashboard</p>
+            <form id="login-form">
+                <input type="text" id="username" value="admin" readonly>
+                <input type="password" id="password" placeholder="Admin password" required autocomplete="current-password">
+                <button type="submit">Login</button>
+                <div id="login-error" class="error"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="app" class="app hidden">
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>WindroseRCON</h2>
+                <span class="version">v1.0.0</span>
+            </div>
+            <nav>
+                <a href="#" data-tab="status" class="active">Status</a>
+                <a href="#" data-tab="console">Console</a>
+                <a href="#" data-tab="config">Config</a>
+                <a href="#" data-tab="whitelist">Whitelist</a>
+                <a href="#" data-tab="banlist">Banlist</a>
+                <a href="#" id="logout-link">Logout</a>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <section id="tab-status" class="tab active">
+                <h2>Server Status</h2>
+                <div class="cards">
+                    <div class="card">
+                        <h3>Health</h3>
+                        <div id="health-status" class="status-value">Checking...</div>
+                    </div>
+                    <div class="card">
+                        <h3>Online Players</h3>
+                        <pre id="players-list">Loading...</pre>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-console" class="tab">
+                <h2>Command Console</h2>
+                <div class="console-box">
+                    <div id="console-output" class="console-output"></div>
+                    <div class="console-input-row">
+                        <input type="text" id="console-input" placeholder="Enter command (e.g. players)" autocomplete="off">
+                        <button id="console-send">Send</button>
+                    </div>
+                </div>
+                <div class="commands-help">
+                    <h3>Available Commands</h3>
+                    <div id="commands-list">Loading...</div>
+                </div>
+            </section>
+
+            <section id="tab-config" class="tab">
+                <h2>Configuration</h2>
+                <div class="form-group">
+                    <label>Admin Password</label>
+                    <input type="password" id="cfg-admin-password" placeholder="Leave empty to keep current">
+                </div>
+                <div class="form-group">
+                    <label>RCON Password</label>
+                    <input type="password" id="cfg-rcon-password" placeholder="Leave empty to use admin password">
+                </div>
+                <div class="form-group">
+                    <label>Discord Webhook URL</label>
+                    <input type="text" id="cfg-discord-webhook">
+                </div>
+                <div class="form-group">
+                    <label>HTTP Port</label>
+                    <input type="number" id="cfg-http-port">
+                </div>
+                <div class="form-group">
+                    <label>Log Level</label>
+                    <select id="cfg-log-level">
+                        <option value="debug">debug</option>
+                        <option value="info">info</option>
+                        <option value="warn">warn</option>
+                        <option value="error">error</option>
+                    </select>
+                </div>
+                <button id="cfg-save">Save Config</button>
+                <div id="cfg-message" class="message"></div>
+            </section>
+
+            <section id="tab-whitelist" class="tab">
+                <h2>Admin Whitelist</h2>
+                <div class="cards">
+                    <div class="card">
+                        <h3>Steam IDs</h3>
+                        <div class="list-editor">
+                            <div class="input-row">
+                                <input type="text" id="wl-steam-input" placeholder="76561198000000000">
+                                <button id="wl-steam-add">Add</button>
+                            </div>
+                            <ul id="wl-steam-list"></ul>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>IP Whitelist</h3>
+                        <div class="list-editor">
+                            <div class="input-row">
+                                <input type="text" id="wl-ip-input" placeholder="127.0.0.1">
+                                <button id="wl-ip-add">Add</button>
+                            </div>
+                            <ul id="wl-ip-list"></ul>
+                        </div>
+                    </div>
+                </div>
+                <button id="wl-save">Save Whitelist</button>
+                <div id="wl-message" class="message"></div>
+            </section>
+
+            <section id="tab-banlist" class="tab">
+                <h2>Banlist</h2>
+                <div class="input-row">
+                    <input type="text" id="ban-userid" placeholder="UserId or Steam ID">
+                    <input type="text" id="ban-reason" placeholder="Reason (optional)">
+                    <button id="ban-add">Ban</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>UserId</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ban-list"></tbody>
+                </table>
+                <div id="ban-message" class="message"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

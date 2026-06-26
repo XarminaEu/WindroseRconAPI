@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config/whitelist/banlist management endpoints and runtime config storage.
 - Discord webhook integration (`dchat`, `broadcast`, `say`, and optional in-game chat hook).
 - Windrose-safe `UE4SS-settings.ini` that avoids common crash hooks.
-- PowerShell install script (`install.ps1`) and single complete release zip (`WindroseRCON-Complete-v1.0.0.zip`).
+- Single complete release zip (`WindroseRCON-Complete-v1.0.0.zip`) with the correct folder structure for manual extraction.
 - Standalone Lua tests: `test_mod.lua`, `test_rcon.lua`, `test_rest_api.lua`, `test_json.lua`, and `test_dashboard.lua`.
 - English documentation: `README.md`, `docs/commands.md`, `CHANGELOG.md`, and `LICENSE`.
 
