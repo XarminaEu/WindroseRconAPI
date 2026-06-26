@@ -1,0 +1,101 @@
+print("[WindroseRCON] Loading...\n")
+
+local Config = require("config")
+local Utils = require("utils")
+local CommandRegistry = require("command_registry")
+local Commands = require("commands")
+local GameApi = require("game_api")
+local Auth = require("auth")
+local RconServer = require("rcon_server")
+
+local config = Config.Load()
+Utils.SetConfig(config)
+Auth.Init(config)
+
+-- If no separate RCON password is set, use the admin password for RCON too.
+if not config.rcon.password or config.rcon.password == "" then
+    config.rcon.password = config.admin.password
+end
+
+Commands.RegisterAll()
+
+local function ProcessCommandFile()
+    if not config.rcon.fallback_file_bridge then return end
+
+    local cmd_file = config.rcon.command_file
+    local resp_file = config.rcon.response_file
+
+    if not Utils.FileExists(cmd_file) then return end
+
+    local content = Utils.ReadFile(cmd_file)
+    if not content or content == "" then return end
+
+    Utils.WriteFile(cmd_file, "")
+
+    local lines = {}
+    for line in content:gmatch("[^\r\n]+") do
+        table.insert(lines, line)
+    end
+
+    local responses = {}
+    for _, line in ipairs(lines) do
+        local parts = Utils.SplitString(line, "|")
+        if #parts >= 2 then
+            local req_id = parts[1]
+            local cmd_name = parts[2]:lower()
+            local args = {}
+            for i = 3, #parts do
+                table.insert(args, parts[i])
+            end
+
+            Utils.LogInfo("Executing file-bridge command: " .. cmd_name .. " (id=" .. req_id .. ")")
+
+            local result = CommandRegistry.Execute(cmd_name, args, { config = config, source = "file", session_id = "file" })
+            local response_line = string.format("%s|%d|%s", req_id, result.success and 1 or 0, result.message or "")
+            table.insert(responses, response_line)
+        end
+    end
+
+    if #responses > 0 then
+        local existing = Utils.ReadFile(resp_file) or ""
+        Utils.WriteFile(resp_file, existing .. table.concat(responses, "\n") .. "\n")
+    end
+end
+
+local function ProcessConsoleCommand(full_command, parameters, output_device)
+    local cmd_name = parameters[1]
+    if not cmd_name then return false end
+
+    table.remove(parameters, 1)
+    local session_id = "console"
+    if output_device and output_device:IsValid() and output_device.GetName then
+        session_id = tostring(output_device:GetName()) or "console"
+    end
+    local result = CommandRegistry.Execute(cmd_name, parameters, { config = config, source = "console", session_id = session_id })
+    if output_device and output_device:IsValid() then
+        output_device:Log(result.message or "OK")
+    end
+    return true
+end
+
+RegisterConsoleCommandHandler("wrc", function(FullCommand, Parameters, Ar)
+    return ProcessConsoleCommand(FullCommand, Parameters, Ar)
+end)
+
+RegisterConsoleCommandHandler("windrose", function(FullCommand, Parameters, Ar)
+    return ProcessConsoleCommand(FullCommand, Parameters, Ar)
+end)
+
+local rcon_started = RconServer.Start(config)
+if not rcon_started then
+    Utils.LogWarn("In-process RCON server failed to start. File bridge still active if enabled.")
+end
+
+RegisterHook("/Script/Engine.GameEngine:Tick", function()
+    local ok, err = pcall(ProcessCommandFile)
+    if not ok then
+        Utils.LogError("Tick poll error: " .. tostring(err))
+    end
+end)
+
+Utils.LogInfo("WindroseRCON loaded. Commands available via 'wrc <command>' or RCON.")

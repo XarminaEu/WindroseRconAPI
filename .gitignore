@@ -1,0 +1,21 @@
+# Build artifacts
+WindroseRCON_DLL/build/
+*.lib
+*.exp
+*.obj
+
+# Test executables / binaries
+lua_test.exe
+*.ilk
+*.pdb
+
+# Lua binary downloads
+WindroseRCON_DLL/deps/lua-5.4.7_Win64_*.zip
+WindroseRCON_DLL/deps/lua_source.zip
+
+# Runtime data
+WindroseRCON/Data/*.txt
+
+# IDE
+.vs/
+*.user
