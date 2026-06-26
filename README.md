@@ -45,7 +45,7 @@ WindroseRCON/
 │   ├── src/windrose_rcon.cpp
 │   ├── build.bat
 │   └── BUILD.md
-├── BuildZips/                  # Pre-packaged release zips
+├── BuildZips/                  # Pre-packaged release zip (single complete install)
 ├── UE4SS-settings.ini          # Windrose-safe UE4SS settings
 ├── install.ps1                 # PowerShell install script
 ├── test_mod.lua                # Lua logic test
@@ -98,23 +98,27 @@ cd WindroseRCON
 
 ## Installation
 
-1. Install UE4SS into your Windrose server:
-   - Extract `dwmapi.dll` and the `ue4ss` folder to `R5\Binaries\Win64\`.
-2. Build the `windrose_rcon.dll` (see above).
-3. Run the install script from your Windrose server root (the folder that contains `R5\Binaries\Win64\ue4ss`):
+### Quick Install (Single Zip)
+
+1. Download `WindroseRCON-Complete-v1.0.0.zip` from the `BuildZips` folder or GitHub releases.
+2. Make sure UE4SS is installed in your Windrose server (`dwmapi.dll` and the `ue4ss` folder in `R5\Binaries\Win64\`).
+3. Extract the zip anywhere on your server machine. It contains the mod folder, install script, and settings.
+4. From your **Windrose server root** (the folder that contains `R5\Binaries\Win64\ue4ss`), run:
    ```powershell
-   .\path\to\WindroseRCON\install.ps1
+   .\path\to\extracted\WindroseRCON\install.ps1
    ```
-4. Verify that `windrose_rcon.dll` is present in:
-   ```
-   R5\Binaries\Win64\ue4ss\Mods\WindroseRCON\Scripts\
-   ```
+   The script copies the mod folder and `windrose_rcon.dll` to `R5\Binaries\Win64\ue4ss\Mods\WindroseRCON\`.
 5. Edit the mod config:
    - Open `R5\Binaries\Win64\ue4ss\Mods\WindroseRCON\Scripts\config_user.lua`.
    - Set a strong `admin.password`. This is required for all admin commands.
    - If `rcon.password` is left empty, RCON will use the admin password.
+   - Set a `discord.webhook_url` if you want Discord forwarding.
    - Add admin Steam IDs if desired.
-6. Start the Windrose server. The mod writes a log line when it loads and the RCON server is listening.
+6. Start the Windrose server. The mod writes a log line when it loads and the RCON/HTTP server is listening.
+
+### Build from Source
+
+If you want to compile the DLL yourself, see `WindroseRCON_DLL/BUILD.md`.
 
 ## Usage
 
