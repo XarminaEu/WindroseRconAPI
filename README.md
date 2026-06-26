@@ -104,9 +104,11 @@ cd WindroseRCON
 2. Make sure UE4SS is installed in your Windrose server (`dwmapi.dll` and the `ue4ss` folder in `R5\Binaries\Win64\`).
 3. Extract the zip directly into your **Windrose server root** (the folder that contains `R5\`). The zip contains the correct folder structure:
    ```
-   R5\Binaries\Win64\ue4ss\Mods\WindroseRCON\      (mod folder with DLL and scripts)
+   R5\Binaries\Win64\windrose_rcon.dll              (networking DLL)
+   R5\Binaries\Win64\ue4ss\Mods\WindroseRCON\      (mod folder with scripts)
    R5\Binaries\Win64\ue4ss\UE4SS-settings.ini     (Windrose-safe UE4SS settings)
    ```
+   The DLL is also kept in the mod's `Scripts` folder for Lua to load it.
 4. Enable the mod in UE4SS:
    - Add `WindroseRCON : 1` to `R5\Binaries\Win64\ue4ss\Mods\mods.txt` or add it to `mods.json` with `"mod_enabled": true`.
 5. Edit the mod config:
