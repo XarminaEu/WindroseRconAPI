@@ -10,8 +10,10 @@ A server-side admin/RCON framework for Windrose powered by [UE4SS](https://githu
 - Command registry that is easy to extend with new commands
 - Source RCON-compatible TCP server running **inside the game process** (no external server needed)
 - Small C++ networking DLL (`windrose_rcon.dll`) loaded by the Lua mod
+- JSON REST API with token-based authentication on port `8780`
+- Discord webhook integration for in-game chat forwarding
 - Windrose-safe UE4SS settings that avoid common crash hooks
-- Admin password system required for all admin commands (console, file bridge, and RCON)
+- Admin password system required for all admin commands (console, file bridge, RCON, and REST API)
 - Admin whitelist, RCON password, and logging configuration
 
 ## Project Layout
@@ -29,6 +31,10 @@ WindroseRCON/
 │       ├── command_registry.lua
 │       ├── commands.lua        # Built-in commands
 │       ├── rcon_server.lua     # In-process RCON server
+│       ├── rest_api.lua        # JSON REST API
+│       ├── http_server.lua     # HTTP server for REST API
+│       ├── discord.lua         # Discord webhook integration
+│       ├── json.lua            # JSON encode/decode
 │       ├── game_api.lua        # Windrose game wrappers
 │       ├── utils.lua           # Helpers
 │       └── windrose_rcon.dll   # Pre-built C++ networking DLL
@@ -85,6 +91,8 @@ cd WindroseRCON
 
 - `test_mod.lua` tests the command registry, login/logout, and admin password enforcement.
 - `test_rcon.lua` tests the full Source RCON protocol (auth, command, response).
+- `test_rest_api.lua` tests the REST API endpoints and HTTP POST helper.
+- `test_json.lua` tests the JSON encoder/decoder.
 
 ## Installation
 
@@ -120,6 +128,40 @@ wrc kick PlayerName "Spamming chat"
 ```
 
 Admin commands require `login` first. The session stays authenticated until `logout` or the server restarts.
+
+### REST API
+
+The mod also exposes a JSON REST API on port `8780` by default (configurable in `config_user.lua`).
+
+Endpoints:
+
+- `GET /api/health` — health check (no auth)
+- `POST /api/login` — authenticate with `{ "username": "admin", "password": "your-password" }` and receive a token
+- `POST /api/logout` — invalidate the current token
+- `POST /api/command` — execute an RCON command with `{ "command": "help" }` and `Authorization: Bearer <token>`
+- `GET /api/commands` — list all commands
+- `GET /api/players` — list online players
+
+Example:
+
+```bash
+TOKEN=$(curl -s -X POST http://127.0.0.1:8780/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"your-password"}' | jq -r .token)
+
+curl -s -X POST http://127.0.0.1:8780/api/command \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"command":"players"}'
+```
+
+### Discord Webhook
+
+Set `discord.webhook_url` in `config_user.lua` to forward in-game messages to a Discord channel:
+
+- `broadcast` and `say` automatically send to Discord.
+- `dchat <message>` sends a message to Discord only.
+- If the in-game chat function can be hooked automatically, regular player chat will also be forwarded.
 
 ### RCON Client
 

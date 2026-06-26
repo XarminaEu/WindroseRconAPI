@@ -9,13 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - UE4SS Lua mod with command registry and in-game console commands (`wrc <command>`).
-- Built-in commands: `help`, `players`, `kick`, `ban`, `tp`, `getpos`, `broadcast`, `say`, `give`, `settime`, `spawn`, `kill`, `heal`, `version`, `login`, `logout`.
-- Admin password system required for all admin commands across console, file bridge, and RCON.
+- Built-in commands: `help`, `players`, `kick`, `ban`, `tp`, `getpos`, `broadcast`, `say`, `dchat`, `give`, `settime`, `spawn`, `kill`, `heal`, `version`, `login`, `logout`.
+- Admin password system required for all admin commands across console, file bridge, RCON, and REST API.
 - Source RCON-compatible TCP server running inside the game process via `windrose_rcon.dll`.
-- C++ networking DLL (`windrose_rcon.dll`) with TCP socket API for Lua.
+- C++ networking DLL (`windrose_rcon.dll`) with TCP socket API and HTTPS POST (WinHTTP) for Lua.
+- JSON REST API with token authentication on port `8780`.
+- Discord webhook integration (`dchat`, `broadcast`, `say`, and optional in-game chat hook).
 - Windrose-safe `UE4SS-settings.ini` that avoids common crash hooks.
 - PowerShell install script (`install.ps1`).
-- Standalone Lua tests: `test_mod.lua` (logic/auth) and `test_rcon.lua` (RCON protocol).
+- Standalone Lua tests: `test_mod.lua`, `test_rcon.lua`, `test_rest_api.lua`, and `test_json.lua`.
 - English documentation: `README.md`, `docs/commands.md`, `CHANGELOG.md`, and `LICENSE`.
 
 ### Notes

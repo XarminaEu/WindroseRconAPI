@@ -20,6 +20,15 @@ return {
             -- "127.0.0.1",
         },
     },
+    http = {
+        enabled = true,
+        host = "0.0.0.0",
+        port = 8780,
+    },
+    discord = {
+        webhook_url = "",  -- Paste your Discord webhook URL here to forward in-game chat.
+        username = "Windrose Server",
+    },
     general = {
         log_level = "info",  -- debug, info, warn, error
         command_prefix = "/",

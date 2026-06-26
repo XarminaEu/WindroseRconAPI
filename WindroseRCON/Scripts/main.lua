@@ -7,6 +7,8 @@ local Commands = require("commands")
 local GameApi = require("game_api")
 local Auth = require("auth")
 local RconServer = require("rcon_server")
+local RestApi = require("rest_api")
+local Discord = require("discord")
 
 local config = Config.Load()
 Utils.SetConfig(config)
@@ -91,11 +93,51 @@ if not rcon_started then
     Utils.LogWarn("In-process RCON server failed to start. File bridge still active if enabled.")
 end
 
+Discord.Init(config)
+
+local rest_api_started = RestApi.Start(config, CommandRegistry, Auth)
+if not rest_api_started then
+    Utils.LogWarn("REST API server failed to start.")
+end
+
 RegisterHook("/Script/Engine.GameEngine:Tick", function()
     local ok, err = pcall(ProcessCommandFile)
     if not ok then
         Utils.LogError("Tick poll error: " .. tostring(err))
     end
 end)
+
+local function TryChatHook(class_name, method_name)
+    local full_name = class_name .. ":" .. method_name
+    local ok = pcall(function()
+        RegisterHook(full_name, function(Context)
+            local params = Context:get_params()
+            if params and params[1] then
+                local message = tostring(params[1])
+                local sender = "Unknown"
+                if params[2] then
+                    sender = tostring(params[2])
+                end
+                Discord.SendMessage("[" .. sender .. "]: " .. message)
+            end
+        end)
+    end)
+    if ok then
+        Utils.LogInfo("Chat hook registered: " .. full_name)
+        return true
+    else
+        Utils.LogDebug("Chat hook failed: " .. full_name)
+        return false
+    end
+end
+
+if config.discord and config.discord.webhook_url ~= "" then
+    local hooked = TryChatHook("/Script/R5.R5PlayerController", "ServerSay") or
+                   TryChatHook("/Script/R5.R5PlayerState", "ServerSay") or
+                   TryChatHook("/Script/R5.R5GameState", "BroadcastChatMessage")
+    if not hooked then
+        Utils.LogWarn("Could not auto-register in-game chat hook. Discord will still receive messages from broadcast/say commands and manual dchat command.")
+    end
+end
 
 Utils.LogInfo("WindroseRCON loaded. Commands available via 'wrc <command>' or RCON.")

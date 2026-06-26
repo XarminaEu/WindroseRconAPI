@@ -13,8 +13,10 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <winhttp.h>
 #include <string.h>
 #include <stdio.h>
+#include <string>
 
 extern "C" {
 #include "lua.h"
@@ -22,6 +24,7 @@ extern "C" {
 }
 
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "winhttp.lib")
 
 #define WRC_VERSION "1.0.0"
 
@@ -300,6 +303,119 @@ static int wrc_getsockname(lua_State* L) {
     return 2;
 }
 
+static int wrc_http_post(lua_State* L) {
+    const char* url = luaL_checkstring(L, 1);
+    const char* body = luaL_checkstring(L, 2);
+    const char* content_type = luaL_optstring(L, 3, "application/json");
+    int timeout_ms = (int)luaL_optinteger(L, 4, 10000);
+
+    URL_COMPONENTS urlComp;
+    wchar_t hostName[256] = {0};
+    wchar_t path[1024] = {0};
+    memset(&urlComp, 0, sizeof(urlComp));
+    urlComp.dwStructSize = sizeof(urlComp);
+    urlComp.lpszHostName = hostName;
+    urlComp.dwHostNameLength = 256;
+    urlComp.lpszUrlPath = path;
+    urlComp.dwUrlPathLength = 1024;
+
+    int urlLen = MultiByteToWideChar(CP_UTF8, 0, url, -1, NULL, 0);
+    wchar_t* wideUrl = new wchar_t[urlLen];
+    MultiByteToWideChar(CP_UTF8, 0, url, -1, wideUrl, urlLen);
+
+    BOOL cracked = WinHttpCrackUrl(wideUrl, 0, 0, &urlComp);
+    delete[] wideUrl;
+
+    if (!cracked) {
+        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
+        lua_pushstring(L, "failed to parse URL");
+        return 3;
+    }
+
+    BOOL isHttps = urlComp.nScheme == INTERNET_SCHEME_HTTPS;
+    HINTERNET hSession = WinHttpOpen(L"WindroseRCON/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    if (!hSession) {
+        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
+        lua_pushstring(L, "winhttp open failed");
+        return 3;
+    }
+
+    HINTERNET hConnect = WinHttpConnect(hSession, hostName, urlComp.nPort ? urlComp.nPort : (isHttps ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT), 0);
+    if (!hConnect) {
+        WinHttpCloseHandle(hSession);
+        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
+        lua_pushstring(L, "winhttp connect failed");
+        return 3;
+    }
+
+    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, isHttps ? WINHTTP_FLAG_SECURE : 0);
+    if (!hRequest) {
+        WinHttpCloseHandle(hConnect);
+        WinHttpCloseHandle(hSession);
+        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
+        lua_pushstring(L, "winhttp open request failed");
+        return 3;
+    }
+
+    WinHttpSetTimeouts(hRequest, timeout_ms, timeout_ms, timeout_ms, timeout_ms);
+
+    int ctLen = MultiByteToWideChar(CP_UTF8, 0, content_type, -1, NULL, 0);
+    wchar_t* wideContentType = new wchar_t[ctLen];
+    MultiByteToWideChar(CP_UTF8, 0, content_type, -1, wideContentType, ctLen);
+
+    BOOL sent = WinHttpSendRequest(hRequest, wideContentType, -1, (LPVOID)body, (DWORD)strlen(body), (DWORD)strlen(body), 0);
+    delete[] wideContentType;
+
+    if (!sent) {
+        WinHttpCloseHandle(hRequest);
+        WinHttpCloseHandle(hConnect);
+        WinHttpCloseHandle(hSession);
+        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
+        lua_pushstring(L, "winhttp send request failed");
+        return 3;
+    }
+
+    BOOL received = WinHttpReceiveResponse(hRequest, NULL);
+    if (!received) {
+        WinHttpCloseHandle(hRequest);
+        WinHttpCloseHandle(hConnect);
+        WinHttpCloseHandle(hSession);
+        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
+        lua_pushstring(L, "winhttp receive response failed");
+        return 3;
+    }
+
+    DWORD statusCode = 0;
+    DWORD statusCodeSize = sizeof(statusCode);
+    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeSize, WINHTTP_NO_HEADER_INDEX);
+
+    std::string response;
+    DWORD available = 0;
+    while (WinHttpQueryDataAvailable(hRequest, &available) && available > 0) {
+        char* buffer = new char[available + 1];
+        DWORD read = 0;
+        WinHttpReadData(hRequest, buffer, available, &read);
+        buffer[read] = 0;
+        response.append(buffer);
+        delete[] buffer;
+    }
+
+    WinHttpCloseHandle(hRequest);
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
+
+    lua_pushboolean(L, statusCode >= 200 && statusCode < 300 ? 1 : 0);
+    lua_pushinteger(L, statusCode);
+    lua_pushstring(L, response.c_str());
+    return 3;
+}
+
 static const luaL_Reg windrose_rcon_lib[] = {
     { "init", wrc_init },
     { "cleanup", wrc_cleanup },
@@ -311,6 +427,7 @@ static const luaL_Reg windrose_rcon_lib[] = {
     { "close", wrc_close },
     { "select", wrc_select },
     { "getsockname", wrc_getsockname },
+    { "http_post", wrc_http_post },
     { NULL, NULL }
 };
 

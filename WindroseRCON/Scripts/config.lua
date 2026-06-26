@@ -16,6 +16,15 @@ Config.Defaults = {
         steam_ids = {},
         ip_whitelist = {},
     },
+    http = {
+        enabled = true,
+        host = "0.0.0.0",
+        port = 8780,
+    },
+    discord = {
+        webhook_url = "",  -- Discord webhook URL for in-game chat forwarding.
+        username = "Windrose Server",
+    },
     general = {
         log_level = "info",
         command_prefix = "/",

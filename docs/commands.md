@@ -24,7 +24,7 @@ Set `admin.password` in `config_user.lua`. If it is empty, admin commands will b
 - `players` - Lists all online players with name, player ID, ping, and position.
 - `kick <UserId> [Reason]` - Kicks a player from the server.
 - `ban <UserId> [Reason]` - Kicks a player and appends a ban entry to the log file.
-- `say <UserId> <Message>` - Sends a private message to a player.
+- `say <UserId> <Message>` - Sends a private message to a player and to Discord.
 - `getpos <UserId>` - Shows the player's current world position.
 
 ## Teleport & Movement
@@ -33,9 +33,14 @@ Set `admin.password` in `config_user.lua`. If it is empty, admin commands will b
 
 ## World
 
-- `broadcast <Message>` - Sends a message to all players.
+- `broadcast <Message>` - Sends a message to all players and to Discord (if webhook is configured).
 - `settime <hour>` - Sets the server time hour (0-23).
 - `spawn <CreatureId> <X> <Y> <Z> [Level]` - Spawns a creature at coordinates.
+
+## Communication
+
+- `say <UserId> <Message>` - Sends a private message to a player and to Discord (if webhook is configured).
+- `dchat <Message>` - Sends a message to Discord only.
 
 ## Items & Health
 
@@ -48,6 +53,32 @@ Set `admin.password` in `config_user.lua`. If it is empty, admin commands will b
 - `<UserId>` can match player name, `PlayerId`, or the Steam ID if exposed by the game.
 - Arguments with spaces should be wrapped in quotes when sent via RCON.
 - Coordinates are float values in the game world space.
+
+## REST API
+
+The HTTP REST API is enabled by default on port `8780`. The `admin` username is always required for login; the password is the `admin.password` from `config_user.lua`.
+
+### Endpoints
+
+- `GET /api/health` — no auth, returns server status.
+- `POST /api/login` — body `{ "username": "admin", "password": "..." }`, returns `{ "success": true, "token": "..." }`.
+- `POST /api/logout` — requires `Authorization: Bearer <token>`.
+- `POST /api/command` — body `{ "command": "players" }`, requires bearer token.
+- `GET /api/commands` — requires bearer token, returns command list.
+- `GET /api/players` — requires bearer token, returns player list.
+
+### Example
+
+```bash
+TOKEN=$(curl -s -X POST http://127.0.0.1:8780/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"your-password"}' | jq -r .token)
+
+curl -s -X POST http://127.0.0.1:8780/api/command \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"command":"players"}'
+```
 
 ## RCON Examples
 

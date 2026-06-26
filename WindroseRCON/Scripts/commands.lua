@@ -3,6 +3,7 @@ local CommandRegistry = require("command_registry")
 local GameApi = require("game_api")
 local Utils = require("utils")
 local Auth = require("auth")
+local Discord = require("discord")
 
 local function FormatPlayerList()
     local players = GameApi.GetAllPlayerStates()
@@ -101,8 +102,9 @@ function Commands.RegisterAll()
         if #args < 1 then return { success = false, message = "Usage: broadcast <Message>" } end
         local message = table.concat(args, " ")
         GameApi.BroadcastMessage(message)
+        Discord.BroadcastToDiscord("[Broadcast] " .. message)
         return { success = true, message = "Broadcasted: " .. message }
-    end, "Sends a message to all players", {"<Message>"}, "admin")
+    end, "Sends a message to all players and Discord", {"<Message>"}, "admin")
 
     CommandRegistry.Register("say", function(args, ctx)
         if #args < 2 then return { success = false, message = "Usage: say <UserId> <Message>" } end
@@ -110,8 +112,16 @@ function Commands.RegisterAll()
         if not target then return { success = false, message = "Player not found: " .. args[1] } end
         local message = table.concat(args, " ", 2)
         GameApi.SendPlayerMessage(target, message, "Say")
+        Discord.SendMessage("[Say to " .. target:GetPlayerName() .. "] " .. message, "Windrose Server")
         return { success = true, message = "Sent message to " .. target:GetPlayerName() }
-    end, "Sends a private message to a player", {"<UserId>", "<Message>"}, "admin")
+    end, "Sends a private message to a player and Discord", {"<UserId>", "<Message>"}, "admin")
+
+    CommandRegistry.Register("dchat", function(args, ctx)
+        if #args < 1 then return { success = false, message = "Usage: dchat <Message>" } end
+        local message = table.concat(args, " ")
+        Discord.BroadcastToDiscord(message)
+        return { success = true, message = "Sent to Discord: " .. message }
+    end, "Sends a message to Discord only", {"<Message>"}, "admin")
 
     CommandRegistry.Register("give", function(args, ctx)
         if #args < 2 then return { success = false, message = "Usage: give <UserId> <ItemId> [Amount]" } end
