@@ -24,7 +24,7 @@ WindroseRCON_DLL/deps/lua-5.4.7/ltests.c
 WindroseRCON_DLL/deps/lua-5.4.7/ltests.h
 
 # Runtime data
-WindroseRCON/Data/*.txt
+WindroseRCON/Data/
 
 # IDE
 .vs/

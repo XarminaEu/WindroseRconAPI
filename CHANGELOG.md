@@ -14,10 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Source RCON-compatible TCP server running inside the game process via `windrose_rcon.dll`.
 - C++ networking DLL (`windrose_rcon.dll`) with TCP socket API and HTTPS POST (WinHTTP) for Lua.
 - JSON REST API with token authentication on port `8780`.
+- Built-in web admin dashboard served at `/` with status, console, config editor, whitelist, and banlist.
+- Config/whitelist/banlist management endpoints and runtime config storage.
 - Discord webhook integration (`dchat`, `broadcast`, `say`, and optional in-game chat hook).
 - Windrose-safe `UE4SS-settings.ini` that avoids common crash hooks.
 - PowerShell install script (`install.ps1`).
-- Standalone Lua tests: `test_mod.lua`, `test_rcon.lua`, `test_rest_api.lua`, and `test_json.lua`.
+- Standalone Lua tests: `test_mod.lua`, `test_rcon.lua`, `test_rest_api.lua`, `test_json.lua`, and `test_dashboard.lua`.
 - English documentation: `README.md`, `docs/commands.md`, `CHANGELOG.md`, and `LICENSE`.
 
 ### Notes

@@ -37,7 +37,8 @@ WindroseRCON/
 │       ├── json.lua            # JSON encode/decode
 │       ├── game_api.lua        # Windrose game wrappers
 │       ├── utils.lua           # Helpers
-│       └── windrose_rcon.dll   # Pre-built C++ networking DLL
+│       ├── windrose_rcon.dll   # Pre-built C++ networking DLL
+│       └── dashboard/          # Web admin dashboard (HTML/CSS/JS)
 ├── WindroseRCON_DLL/           # C++ networking DLL source
 │   ├── CMakeLists.txt
 │   ├── deps/lua-5.4.7/         # Lua 5.4 source (built into the DLL)
@@ -93,6 +94,7 @@ cd WindroseRCON
 - `test_rcon.lua` tests the full Source RCON protocol (auth, command, response).
 - `test_rest_api.lua` tests the REST API endpoints and HTTP POST helper.
 - `test_json.lua` tests the JSON encoder/decoder.
+- `test_dashboard.lua` tests the web dashboard serving and config/whitelist/banlist endpoints.
 
 ## Installation
 
@@ -129,11 +131,20 @@ wrc kick PlayerName "Spamming chat"
 
 Admin commands require `login` first. The session stays authenticated until `logout` or the server restarts.
 
-### REST API
+### REST API & Web Dashboard
 
-The mod also exposes a JSON REST API on port `8780` by default (configurable in `config_user.lua`).
+The mod exposes a JSON REST API and a built-in web admin dashboard on port `8780` by default (configurable in `config_user.lua`). Open `http://<server-ip>:8780/` in a browser after starting the server.
 
-Endpoints:
+The dashboard lets you:
+
+- Log in with username `admin` and the `admin.password` from the config.
+- View server status and online players.
+- Run RCON commands from a web console.
+- Edit config (passwords, Discord webhook, HTTP port, log level).
+- Manage the admin whitelist (Steam IDs / IP addresses).
+- Manage the banlist and ban players directly.
+
+API endpoints:
 
 - `GET /api/health` — health check (no auth)
 - `POST /api/login` — authenticate with `{ "username": "admin", "password": "your-password" }` and receive a token
@@ -141,6 +152,10 @@ Endpoints:
 - `POST /api/command` — execute an RCON command with `{ "command": "help" }` and `Authorization: Bearer <token>`
 - `GET /api/commands` — list all commands
 - `GET /api/players` — list online players
+- `GET /api/config` — get current config (passwords masked)
+- `POST /api/config` — update runtime config
+- `GET /api/whitelist` / `POST /api/whitelist` — manage whitelist
+- `GET /api/banlist` / `POST /api/banlist` — manage banlist
 
 Example:
 

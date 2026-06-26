@@ -61,8 +61,21 @@ local function parse_request(data)
     }
 end
 
+local function content_type_from_path(path)
+    if path:match("%.html$") then return "text/html"
+    elseif path:match("%.css$") then return "text/css"
+    elseif path:match("%.js$") then return "application/javascript"
+    elseif path:match("%.png$") then return "image/png"
+    elseif path:match("%.jpg$") or path:match("%.jpeg$") then return "image/jpeg"
+    elseif path:match("%.svg$") then return "image/svg+xml"
+    elseif path:match("%.ico$") then return "image/x-icon"
+    elseif path:match("%.json$") then return "application/json"
+    else return "text/plain" end
+end
+
 local function send_response(client, status_code, content_type, body)
-    if not client or not client.socket then return end
+    if not client or not client.socket or client.responded then return end
+    client.responded = true
     local status_text = "OK"
     if status_code == 200 then status_text = "OK"
     elseif status_code == 400 then status_text = "Bad Request"
@@ -85,6 +98,17 @@ local function send_response(client, status_code, content_type, body)
         end
         sent = sent + n
     end
+end
+
+local function serve_file(client, file_path)
+    local file, err = io.open(file_path, "rb")
+    if not file then
+        send_response(client, 404, "text/plain", "Not found")
+        return
+    end
+    local content = file:read("*a")
+    file:close()
+    send_response(client, 200, content_type_from_path(file_path), content or "")
 end
 
 local function receive_request(client)
@@ -190,13 +214,14 @@ function HttpServer.Tick(config, command_registry, auth)
             socket = client_socket,
             buffer = "",
             closed = false,
+            responded = false,
         })
     end
 
     local i = 1
     while i <= #clients do
         local client = clients[i]
-        if client.closed then
+        if client.closed or client.responded then
             net.close(client.socket)
             table.remove(clients, i)
         else
@@ -204,6 +229,7 @@ function HttpServer.Tick(config, command_registry, auth)
             if request_data then
                 local request = parse_request(request_data)
                 if request then
+                    request.client = client
                     HttpServer.HandleRequest(client, request, config, command_registry, auth)
                 else
                     send_response(client, 400, "application/json", '{"success":false,"error":"Bad request"}')
@@ -237,7 +263,13 @@ function HttpServer.HandleRequest(client, request, config, command_registry, aut
         return
     end
 
-    send_response(client, status, "application/json", body)
+    if status and status ~= 0 then
+        send_response(client, status, "application/json", body)
+    end
+end
+
+function HttpServer.ServeFile(client, file_path)
+    serve_file(client, file_path)
 end
 
 function HttpServer.Stop()

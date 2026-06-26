@@ -1,5 +1,8 @@
 local Config = {}
 
+local Json = require("json")
+local RUNTIME_CONFIG_PATH = "WindroseRCON/Data/config_runtime.json"
+
 Config.Defaults = {
     rcon = {
         enabled = true,
@@ -42,6 +45,16 @@ local function DeepMerge(base, override)
     return base
 end
 
+local function LoadRuntimeConfig(path)
+    local file = io.open(path, "r")
+    if not file then return {} end
+    local content = file:read("*a")
+    file:close()
+    local data = Json.Decode(content)
+    if type(data) ~= "table" then return {} end
+    return data
+end
+
 function Config.Load()
     local user_config = {}
     local ok, loaded = pcall(function()
@@ -53,12 +66,26 @@ function Config.Load()
         print("[WindroseRCON] config_user.lua not found or invalid, using defaults\n")
     end
     local config = DeepMerge(DeepMerge({}, Config.Defaults), user_config)
+    local runtime_config = LoadRuntimeConfig(RUNTIME_CONFIG_PATH)
+    config = DeepMerge(config, runtime_config)
 
     if not config.admin.password or config.admin.password == "" then
         print("[WindroseRCON] WARNING: admin.password is not set in config_user.lua. Admin commands will be rejected.\n")
     end
 
     return config
+end
+
+function Config.SaveRuntimeConfig(runtime_config)
+    local file = io.open(RUNTIME_CONFIG_PATH, "w")
+    if not file then return false end
+    file:write(Json.Encode(runtime_config))
+    file:close()
+    return true
+end
+
+function Config.LoadRuntimeConfig()
+    return LoadRuntimeConfig(RUNTIME_CONFIG_PATH)
 end
 
 return Config

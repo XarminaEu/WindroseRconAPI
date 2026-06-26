@@ -54,9 +54,13 @@ Set `admin.password` in `config_user.lua`. If it is empty, admin commands will b
 - Arguments with spaces should be wrapped in quotes when sent via RCON.
 - Coordinates are float values in the game world space.
 
-## REST API
+## REST API & Web Dashboard
 
-The HTTP REST API is enabled by default on port `8780`. The `admin` username is always required for login; the password is the `admin.password` from `config_user.lua`.
+The HTTP REST API and web dashboard are enabled by default on port `8780`. Open `http://<server-ip>:8780/` in a browser to use the admin dashboard.
+
+The dashboard supports login, status view, command console, config editing, whitelist management, and banlist management.
+
+The `admin` username is always required for API login; the password is the `admin.password` from `config_user.lua`.
 
 ### Endpoints
 
@@ -66,6 +70,10 @@ The HTTP REST API is enabled by default on port `8780`. The `admin` username is 
 - `POST /api/command` — body `{ "command": "players" }`, requires bearer token.
 - `GET /api/commands` — requires bearer token, returns command list.
 - `GET /api/players` — requires bearer token, returns player list.
+- `GET /api/config` — requires bearer token, returns current config (passwords masked).
+- `POST /api/config` — requires bearer token, updates runtime config.
+- `GET /api/whitelist` / `POST /api/whitelist` — requires bearer token, manage whitelist.
+- `GET /api/banlist` / `POST /api/banlist` — requires bearer token, manage banlist.
 
 ### Example
 
