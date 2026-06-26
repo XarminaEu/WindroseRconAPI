@@ -13,6 +13,16 @@ lua_test.exe
 WindroseRCON_DLL/deps/lua-5.4.7_Win64_*.zip
 WindroseRCON_DLL/deps/lua_source.zip
 
+# Lua source files not needed for the DLL build
+WindroseRCON_DLL/deps/lua-5.4.7/testes/
+WindroseRCON_DLL/deps/lua-5.4.7/doc/
+WindroseRCON_DLL/deps/lua-5.4.7/manual/
+WindroseRCON_DLL/deps/lua-5.4.7/README.md
+WindroseRCON_DLL/deps/lua-5.4.7/makefile
+WindroseRCON_DLL/deps/lua-5.4.7/onelua.c
+WindroseRCON_DLL/deps/lua-5.4.7/ltests.c
+WindroseRCON_DLL/deps/lua-5.4.7/ltests.h
+
 # Runtime data
 WindroseRCON/Data/*.txt
 
