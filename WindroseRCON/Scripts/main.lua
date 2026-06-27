@@ -142,7 +142,6 @@ end
 
 local function schedule_tick()
     if _G.ExecuteWithDelay then
-        Utils.LogInfo("Using ExecuteWithDelay tick scheduler")
         ExecuteWithDelay(100, function()
             local ok, err = pcall(Tick)
             if not ok then
@@ -150,12 +149,15 @@ local function schedule_tick()
             end
             schedule_tick()
         end)
-    else
-        Utils.LogInfo("ExecuteWithDelay not available, relying on global Tick()")
     end
 end
 
-schedule_tick()
+if _G.ExecuteWithDelay then
+    Utils.LogInfo("Using ExecuteWithDelay tick scheduler")
+    schedule_tick()
+else
+    Utils.LogInfo("ExecuteWithDelay not available, relying on global Tick()")
+end
 
 local function TryChatHook(class_name, method_name)
     local full_name = class_name .. ":" .. method_name

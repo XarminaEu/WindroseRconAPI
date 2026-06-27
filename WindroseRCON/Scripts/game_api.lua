@@ -43,9 +43,15 @@ function GameApi.GetAllPlayerStates()
 
     local result = {}
     local count = player_array:GetArrayNum()
+    if not count or count <= 0 then
+        return result
+    end
+
     for i = 0, count - 1 do
-        local player_state = player_array:Get(i)
-        if player_state and player_state:IsValid() then
+        local ok, player_state = pcall(function()
+            return player_array:Get(i)
+        end)
+        if ok and player_state and player_state:IsValid() then
             table.insert(result, player_state)
         end
     end
@@ -111,11 +117,15 @@ function GameApi.KickPlayer(player_state, reason)
     if not controller or not controller:IsValid() then return false end
     ExecuteInGameThread(function()
         local game_mode = GameApi.GetGameMode()
-        if game_mode and game_mode:IsValid() then
-            game_mode:KickPlayer(controller, reason or "Kicked by admin")
-        else
-            controller:ConsoleCommand("disconnect", true)
+        if game_mode and game_mode:IsValid() and game_mode.KickPlayer then
+            local ok = pcall(function()
+                game_mode:KickPlayer(controller, reason or "Kicked by admin")
+            end)
+            if ok then return end
         end
+        pcall(function()
+            controller:ConsoleCommand("disconnect", true)
+        end)
     end)
     return true
 end
@@ -124,14 +134,18 @@ function GameApi.BroadcastMessage(message)
     ExecuteInGameThread(function()
         local game_state = GameApi.GetGameState()
         if game_state and game_state:IsValid() and game_state.BroadcastChatMessage then
-            game_state:BroadcastChatMessage(message)
-        else
-            local players = GameApi.GetAllPlayerStates()
-            for _, player_state in ipairs(players) do
-                local controller = player_state:GetOwner()
-                if controller and controller:IsValid() then
+            local ok = pcall(function()
+                game_state:BroadcastChatMessage(message)
+            end)
+            if ok then return end
+        end
+        local players = GameApi.GetAllPlayerStates()
+        for _, player_state in ipairs(players) do
+            local controller = player_state:GetOwner()
+            if controller and controller:IsValid() then
+                pcall(function()
                     controller:ClientMessage(message, "Event", 5.0)
-                end
+                end)
             end
         end
     end)
