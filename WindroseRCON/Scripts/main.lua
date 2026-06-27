@@ -69,14 +69,27 @@ local function ProcessConsoleCommand(full_command, parameters, output_device)
     local cmd_name = parameters[1]
     if not cmd_name then return false end
 
-    table.remove(parameters, 1)
+    -- UE4SS sometimes passes the command name as the first parameter, sometimes not.
+    if cmd_name == "wrc" or cmd_name == "windrose" then
+        table.remove(parameters, 1)
+        cmd_name = parameters[1]
+    end
+    if not cmd_name then return false end
+
     local session_id = "console"
     if output_device and output_device:IsValid() and output_device.GetName then
-        session_id = tostring(output_device:GetName()) or "console"
+        local ok, name = pcall(function() return output_device:GetName() end)
+        if ok then session_id = tostring(name) or "console" end
     end
     local result = CommandRegistry.Execute(cmd_name, parameters, { config = config, source = "console", session_id = session_id })
+    local message = result.message or "OK"
     if output_device and output_device:IsValid() then
-        output_device:Log(result.message or "OK")
+        local ok, err = pcall(function() output_device:Log(message) end)
+        if not ok then
+            print("[WindroseRCON] [Console] " .. message)
+        end
+    else
+        print("[WindroseRCON] [Console] " .. message)
     end
     return true
 end
@@ -88,6 +101,8 @@ end)
 RegisterConsoleCommandHandler("windrose", function(FullCommand, Parameters, Ar)
     return ProcessConsoleCommand(FullCommand, Parameters, Ar)
 end)
+
+Utils.LogInfo("Console commands registered: wrc, windrose")
 
 local rcon_started = RconServer.Start(config)
 if not rcon_started then
