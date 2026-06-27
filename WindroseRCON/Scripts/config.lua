@@ -58,19 +58,23 @@ end
 
 function Config.Load()
     local user_config = {}
+    local config_path = package.searchpath("config_user", package.path) or "WindroseRCON/Scripts/config_user.lua"
     local ok, loaded = pcall(function()
         return require("config_user")
     end)
     if ok and type(loaded) == "table" then
         user_config = loaded
-        print("[WindroseRCON] config_user.lua loaded successfully.\n")
+        print("[WindroseRCON] config_user.lua loaded successfully from: " .. tostring(config_path) .. "\n")
     else
-        print("[WindroseRCON] config_user.lua not found or invalid, using defaults. Path: WindroseRCON/Scripts/config_user.lua\n")
+        print("[WindroseRCON] config_user.lua not found or invalid, using defaults. Searched: " .. tostring(config_path) .. "\n")
     end
     -- config_user.lua is the source of truth for ports, passwords, and general settings.
     -- runtime config only overrides whitelist/steam_ids so dashboard edits stay effective.
     local config = DeepMerge(DeepMerge({}, Config.Defaults), user_config)
     local runtime_config = LoadRuntimeConfig(RUNTIME_CONFIG_PATH)
+    if runtime_config and next(runtime_config) then
+        print("[WindroseRCON] Runtime config loaded from: " .. RUNTIME_CONFIG_PATH .. "\n")
+    end
     if runtime_config and runtime_config.admin then
         if runtime_config.admin.ip_whitelist then
             config.admin.ip_whitelist = runtime_config.admin.ip_whitelist
