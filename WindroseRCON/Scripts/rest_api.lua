@@ -42,9 +42,13 @@ local function generate_token()
     return token
 end
 
-local function require_auth(request, config)
+local function get_token(request)
     local auth_header = request.headers["authorization"] or ""
-    local token = auth_header:match("^Bearer%s+(.+)$")
+    return auth_header:match("^Bearer%s+(.+)$")
+end
+
+local function require_auth(request, config)
+    local token = get_token(request)
     if not token or not active_tokens[token] then
         return false
     end
@@ -71,6 +75,7 @@ function RestApi.Start(config, command_registry, auth)
         end
         local token = generate_token()
         active_tokens[token] = true
+        auth.SetAuthenticated(token)
         return 200, Json.Encode({ success = true, token = token })
     end)
 
@@ -78,9 +83,11 @@ function RestApi.Start(config, command_registry, auth)
         if not require_auth(request, cfg) then
             return 401, Json.Encode({ success = false, error = "Unauthorized" })
         end
-        local auth_header = request.headers["authorization"] or ""
-        local token = auth_header:match("^Bearer%s+(.+)$")
-        if token then active_tokens[token] = nil end
+        local token = get_token(request)
+        if token then
+            active_tokens[token] = nil
+            auth.ClearSession(token)
+        end
         return 200, Json.Encode({ success = true })
     end)
 
@@ -92,10 +99,11 @@ function RestApi.Start(config, command_registry, auth)
         if not body or not body.command then
             return 400, Json.Encode({ success = false, error = "Missing command" })
         end
+        local token = get_token(request)
         local parts = Utils.QuoteAwareSplit(body.command)
         local cmd_name = parts[1] and parts[1]:lower() or ""
         table.remove(parts, 1)
-        local result = registry.Execute(cmd_name, parts, { config = cfg, source = "rest", session_id = "rest" })
+        local result = registry.Execute(cmd_name, parts, { config = cfg, source = "rest", session_id = token })
         return 200, Json.Encode({ success = result.success, message = result.message or "" })
     end)
 
@@ -115,7 +123,8 @@ function RestApi.Start(config, command_registry, auth)
         if not require_auth(request, cfg) then
             return 401, Json.Encode({ success = false, error = "Unauthorized" })
         end
-        local result = registry.Execute("players", {}, { config = cfg, source = "rest", session_id = "rest" })
+        local token = get_token(request)
+        local result = registry.Execute("players", {}, { config = cfg, source = "rest", session_id = token })
         return 200, Json.Encode({ success = result.success, message = result.message or "" })
     end)
 
@@ -208,6 +217,7 @@ function RestApi.Start(config, command_registry, auth)
         if not require_auth(request, cfg) then
             return 401, Json.Encode({ success = false, error = "Unauthorized" })
         end
+        local token = get_token(request)
         local body = Json.Decode(request.body or "{}")
         if not body or not body.action then
             return 400, Json.Encode({ success = false, error = "Invalid JSON" })
@@ -218,7 +228,7 @@ function RestApi.Start(config, command_registry, auth)
                 return 400, Json.Encode({ success = false, error = "Missing userid" })
             end
             table.insert(banlist, { userid = body.userid, reason = body.reason or "" })
-            registry.Execute("ban", { body.userid, body.reason or "" }, { config = cfg, source = "rest", session_id = "rest" })
+            registry.Execute("ban", { body.userid, body.reason or "" }, { config = cfg, source = "rest", session_id = token })
         elseif body.action == "unban" then
             if not body.index then
                 return 400, Json.Encode({ success = false, error = "Missing index" })
