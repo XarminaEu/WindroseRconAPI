@@ -116,7 +116,12 @@ if not rest_api_started then
     Utils.LogWarn("REST API server failed to start.")
 end
 
+local last_tick_time = 0
 function Tick()
+    local now = os.clock()
+    if now - last_tick_time < 0.05 then return end
+    last_tick_time = now
+
     local ok1, err1 = pcall(ProcessCommandFile)
     if not ok1 then
         Utils.LogError("Tick poll error: " .. tostring(err1))
@@ -134,6 +139,23 @@ function Tick()
         Utils.LogError("RCON tick error: " .. tostring(err3))
     end
 end
+
+local function schedule_tick()
+    if _G.ExecuteWithDelay then
+        Utils.LogInfo("Using ExecuteWithDelay tick scheduler")
+        ExecuteWithDelay(100, function()
+            local ok, err = pcall(Tick)
+            if not ok then
+                Utils.LogError("Scheduled tick error: " .. tostring(err))
+            end
+            schedule_tick()
+        end)
+    else
+        Utils.LogInfo("ExecuteWithDelay not available, relying on global Tick()")
+    end
+end
+
+schedule_tick()
 
 local function TryChatHook(class_name, method_name)
     local full_name = class_name .. ":" .. method_name
