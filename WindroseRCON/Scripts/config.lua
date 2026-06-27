@@ -58,15 +58,18 @@ end
 
 function Config.Load()
     local user_config = {}
-    local config_path = package.searchpath("config_user", package.path) or "WindroseRCON/Scripts/config_user.lua"
+    local source = debug.getinfo(1, "S").source
+    if source:sub(1, 1) == "@" then source = source:sub(2) end
+    local dir = source:match("^(.*)[/\\]") or ""
+    local config_path = dir .. "/config_user.lua"
     local ok, loaded = pcall(function()
-        return require("config_user")
+        return dofile(config_path)
     end)
     if ok and type(loaded) == "table" then
         user_config = loaded
         print("[WindroseRCON] config_user.lua loaded successfully from: " .. tostring(config_path) .. "\n")
     else
-        print("[WindroseRCON] config_user.lua not found or invalid, using defaults. Searched: " .. tostring(config_path) .. "\n")
+        print("[WindroseRCON] config_user.lua not found or invalid, using defaults. Searched: " .. tostring(config_path) .. " (error: " .. tostring(loaded) .. ")\n")
     end
     -- config_user.lua is the source of truth for ports, passwords, and general settings.
     -- runtime config only overrides whitelist/steam_ids so dashboard edits stay effective.
