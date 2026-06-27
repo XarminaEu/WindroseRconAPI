@@ -36,6 +36,21 @@ Set `admin.password` in `config_user.lua`. If it is empty, admin commands will b
 - `broadcast <Message>` - Sends a message to all players and to Discord (if webhook is configured).
 - `settime <hour>` - Sets the server time hour (0-23).
 - `spawn <CreatureId> <X> <Y> <Z> [Level]` - Spawns a creature at coordinates.
+- `save` - Requests a world save.
+- `shutdown [delay_seconds]` - Shuts down the server (default delay: 5 seconds).
+
+## Player Management (extended)
+
+- `whois <UserId>` - Shows detailed player information (name, player ID, ping, position).
+- `kickall [Reason]` - Kicks all online players.
+
+## Banlist & Whitelist
+
+- `banlist` - Lists all banned players.
+- `unban <index>` - Removes a ban by its index (use `banlist` to see indices).
+- `whitelist` - Shows the current whitelist (Steam IDs and IP addresses).
+- `whitelist add <steam_id or ip>` - Adds a Steam ID or IP address to the whitelist.
+- `whitelist remove <steam_id or ip>` - Removes a Steam ID or IP address from the whitelist.
 
 ## Communication
 

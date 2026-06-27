@@ -4,6 +4,40 @@ local GameApi = require("game_api")
 local Utils = require("utils")
 local Auth = require("auth")
 local Discord = require("discord")
+local Config = require("config")
+local Json = require("json")
+
+local BANLIST_PATH = "WindroseRCON/Data/banlist.json"
+
+local function LoadBanlist()
+    local content = Utils.ReadFile(BANLIST_PATH)
+    if not content then return {} end
+    local data = Json.Decode(content)
+    if type(data) ~= "table" then return {} end
+    return data
+end
+
+local function SaveBanlist(banlist)
+    local ok = Utils.WriteFile(BANLIST_PATH, Json.Encode(banlist))
+    return ok
+end
+
+local function ExecuteServerCommand(command)
+    ExecuteInGameThread(function()
+        local game_mode = GameApi.GetGameMode()
+        if game_mode and game_mode:IsValid() and game_mode.ConsoleCommand then
+            game_mode:ConsoleCommand(command, true)
+        else
+            local players = GameApi.GetAllPlayerStates()
+            if #players > 0 then
+                local controller = players[1]:GetOwner()
+                if controller and controller:IsValid() and controller.ConsoleCommand then
+                    controller:ConsoleCommand(command, true)
+                end
+            end
+        end
+    end)
+end
 
 local function FormatPlayerList()
     local players = GameApi.GetAllPlayerStates()
@@ -186,6 +220,145 @@ function Commands.RegisterAll()
     CommandRegistry.Register("version", function(args, ctx)
         return { success = true, message = "WindroseRCON 1.0.0" }
     end, "Shows the mod version", {}, "any")
+
+    CommandRegistry.Register("save", function(args, ctx)
+        ExecuteServerCommand("SaveWorld")
+        return { success = true, message = "World save requested." }
+    end, "Saves the world", {}, "admin")
+
+    CommandRegistry.Register("shutdown", function(args, ctx)
+        local delay = tonumber(args[1]) or 5
+        ExecuteServerCommand("Exit")
+        return { success = true, message = "Server shutdown requested (delay: " .. delay .. "s)." }
+    end, "Shuts down the server", {"[delay_seconds]"}, "admin")
+
+    CommandRegistry.Register("whois", function(args, ctx)
+        if #args < 1 then return { success = false, message = "Usage: whois <UserId>" } end
+        local target = GameApi.FindPlayerById(args[1])
+        if not target then return { success = false, message = "Player not found: " .. args[1] } end
+        local pos = GameApi.GetPlayerPosition(target)
+        local pos_str = pos and string.format("%.1f %.1f %.1f", pos.X, pos.Y, pos.Z) or "N/A"
+        local ping = "N/A"
+        if target.GetPingInMilliseconds then
+            ping = tostring(target:GetPingInMilliseconds())
+        end
+        local lines = {
+            "Name: " .. target:GetPlayerName(),
+            "PlayerId: " .. tostring(target.PlayerId or "N/A"),
+            "Ping: " .. ping,
+            "Position: " .. pos_str,
+        }
+        return { success = true, message = table.concat(lines, "\n") }
+    end, "Shows detailed player information", {"<UserId>"}, "admin")
+
+    CommandRegistry.Register("kickall", function(args, ctx)
+        local players = GameApi.GetAllPlayerStates()
+        local reason = args[1] or "Kicked by admin"
+        local count = 0
+        for _, player_state in ipairs(players) do
+            if player_state and player_state:IsValid() then
+                GameApi.KickPlayer(player_state, reason)
+                count = count + 1
+            end
+        end
+        return { success = true, message = "Kicked " .. count .. " players." }
+    end, "Kicks all players", {"[Reason]"}, "admin")
+
+    CommandRegistry.Register("banlist", function(args, ctx)
+        local banlist = LoadBanlist()
+        if #banlist == 0 then
+            return { success = true, message = "Banlist is empty." }
+        end
+        local lines = { "Banned players:" }
+        for i, entry in ipairs(banlist) do
+            table.insert(lines, string.format("%d. %s - %s", i, entry.userid or "N/A", entry.reason or "No reason"))
+        end
+        return { success = true, message = table.concat(lines, "\n") }
+    end, "Lists banned players", {}, "admin")
+
+    CommandRegistry.Register("unban", function(args, ctx)
+        if #args < 1 then return { success = false, message = "Usage: unban <index>" } end
+        local index = tonumber(args[1])
+        if not index then return { success = false, message = "Index must be a number" } end
+        local banlist = LoadBanlist()
+        if index < 1 or index > #banlist then
+            return { success = false, message = "Invalid ban index: " .. args[1] }
+        end
+        local removed = table.remove(banlist, index)
+        if SaveBanlist(banlist) then
+            return { success = true, message = "Unbanned: " .. (removed.userid or "N/A") }
+        else
+            return { success = false, message = "Failed to save banlist" }
+        end
+    end, "Removes a ban by index", {"<index>"}, "admin")
+
+    CommandRegistry.Register("whitelist", function(args, ctx)
+        local runtime = Config.LoadRuntimeConfig()
+        local steam_ids = ctx.config.admin.steam_ids or {}
+        local ip_whitelist = ctx.config.admin.ip_whitelist or {}
+        if #args == 0 then
+            local lines = { "Steam IDs:" }
+            for _, id in ipairs(steam_ids) do
+                table.insert(lines, "  " .. id)
+            end
+            table.insert(lines, "IP Whitelist:")
+            for _, ip in ipairs(ip_whitelist) do
+                table.insert(lines, "  " .. ip)
+            end
+            return { success = true, message = table.concat(lines, "\n") }
+        end
+        local action = args[1]:lower()
+        if action == "add" then
+            if not args[2] then return { success = false, message = "Usage: whitelist add <steam_id or ip>" } end
+            runtime.admin = runtime.admin or {}
+            if args[2]:find("%.") then
+                runtime.admin.ip_whitelist = runtime.admin.ip_whitelist or {}
+                table.insert(runtime.admin.ip_whitelist, args[2])
+                ctx.config.admin.ip_whitelist = runtime.admin.ip_whitelist
+            else
+                runtime.admin.steam_ids = runtime.admin.steam_ids or {}
+                table.insert(runtime.admin.steam_ids, args[2])
+                ctx.config.admin.steam_ids = runtime.admin.steam_ids
+            end
+            if Config.SaveRuntimeConfig(runtime) then
+                return { success = true, message = "Added to whitelist: " .. args[2] }
+            else
+                return { success = false, message = "Failed to save whitelist" }
+            end
+        elseif action == "remove" then
+            if not args[2] then return { success = false, message = "Usage: whitelist remove <steam_id or ip>" } end
+            runtime.admin = runtime.admin or {}
+            local removed = false
+            if args[2]:find("%.") then
+                runtime.admin.ip_whitelist = runtime.admin.ip_whitelist or {}
+                for i, ip in ipairs(runtime.admin.ip_whitelist) do
+                    if ip == args[2] then
+                        table.remove(runtime.admin.ip_whitelist, i)
+                        removed = true
+                        break
+                    end
+                end
+                ctx.config.admin.ip_whitelist = runtime.admin.ip_whitelist
+            else
+                runtime.admin.steam_ids = runtime.admin.steam_ids or {}
+                for i, id in ipairs(runtime.admin.steam_ids) do
+                    if id == args[2] then
+                        table.remove(runtime.admin.steam_ids, i)
+                        removed = true
+                        break
+                    end
+                end
+                ctx.config.admin.steam_ids = runtime.admin.steam_ids
+            end
+            if Config.SaveRuntimeConfig(runtime) then
+                return { success = true, message = removed and "Removed from whitelist: " .. args[2] or "Not found in whitelist: " .. args[2] }
+            else
+                return { success = false, message = "Failed to save whitelist" }
+            end
+        else
+            return { success = false, message = "Usage: whitelist [add|remove] <steam_id or ip>" }
+        end
+    end, "Manages the whitelist", {"[add|remove]", "[steam_id or ip]"}, "admin")
 end
 
 return Commands
