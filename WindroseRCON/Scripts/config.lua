@@ -78,7 +78,11 @@ function Config.Load()
 end
 
 function Config.SaveRuntimeConfig(runtime_config)
-    return Utils.WriteFile(RUNTIME_CONFIG_PATH, Json.Encode(runtime_config))
+    local ok = Utils.WriteFile(RUNTIME_CONFIG_PATH, Json.Encode(runtime_config))
+    if not ok then
+        Utils.LogError("Failed to save runtime config to " .. RUNTIME_CONFIG_PATH .. ". Make sure the WindroseRCON/Data folder exists.")
+    end
+    return ok
 end
 
 function Config.LoadRuntimeConfig()

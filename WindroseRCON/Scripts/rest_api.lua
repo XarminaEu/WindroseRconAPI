@@ -25,7 +25,11 @@ local function load_banlist()
 end
 
 local function save_banlist(banlist)
-    return Utils.WriteFile(BANLIST_PATH, Json.Encode(banlist))
+    local ok = Utils.WriteFile(BANLIST_PATH, Json.Encode(banlist))
+    if not ok then
+        Utils.LogError("Failed to save banlist to " .. BANLIST_PATH .. ". Make sure the WindroseRCON/Data folder exists.")
+    end
+    return ok
 end
 
 local function generate_token()
