@@ -127,6 +127,12 @@ function Tick()
     if not ok2 then
         Utils.LogError("HTTP tick error: " .. tostring(err2))
     end
+    local ok3, err3 = pcall(function()
+        RconServer.TickNow()
+    end)
+    if not ok3 then
+        Utils.LogError("RCON tick error: " .. tostring(err3))
+    end
 end
 
 local function TryChatHook(class_name, method_name)

@@ -63,8 +63,9 @@ function Config.Load()
     end)
     if ok and type(loaded) == "table" then
         user_config = loaded
+        print("[WindroseRCON] config_user.lua loaded successfully.\n")
     else
-        print("[WindroseRCON] config_user.lua not found or invalid, using defaults\n")
+        print("[WindroseRCON] config_user.lua not found or invalid, using defaults. Path: WindroseRCON/Scripts/config_user.lua\n")
     end
     -- config_user.lua is the source of truth for ports, passwords, and general settings.
     -- runtime config only overrides whitelist/steam_ids so dashboard edits stay effective.
@@ -81,7 +82,11 @@ function Config.Load()
 
     if not config.admin.password or config.admin.password == "" then
         print("[WindroseRCON] WARNING: admin.password is not set in config_user.lua. Admin commands will be rejected.\n")
+    else
+        print("[WindroseRCON] admin.password is set.\n")
     end
+
+    print(string.format("[WindroseRCON] Config loaded: RCON %s:%d, HTTP %s:%d\n", config.rcon.host, config.rcon.port, config.http.host, config.http.port))
 
     return config
 end

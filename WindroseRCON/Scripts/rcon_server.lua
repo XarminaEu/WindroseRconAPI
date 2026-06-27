@@ -178,32 +178,31 @@ function RconServer.Start(module_config)
         return false
     end
 
-    local host = "0.0.0.0"
-    local port = 25575
-    if config.rcon.port then port = config.rcon.port end
-    if config.rcon.host then host = config.rcon.host end
+    local host = config.rcon.host or "0.0.0.0"
+    local port = config.rcon.port or 25575
+    Utils.LogInfo(string.format("RCON server binding to %s:%d ...", host, port))
 
     server_socket, err = net.bind(host, port)
     if not server_socket then
-        Utils.LogError("Failed to bind RCON server: " .. tostring(err))
+        Utils.LogError(string.format("Failed to bind RCON server on %s:%d: %s", host, port, tostring(err)))
         return false
     end
 
     running = true
     Utils.LogInfo(string.format("RCON server listening on %s:%d", host, port))
 
-    RegisterHook("/Script/Engine.GameEngine:Tick", function()
-        if not running then return end
-        local ok, err = pcall(function()
-            accept_new_client()
-            process_clients()
-        end)
-        if not ok then
-            Utils.LogError("RCON tick error: " .. tostring(err))
-        end
-    end)
-
     return true
+end
+
+function RconServer.TickNow()
+    if not running then return end
+    local ok, err = pcall(function()
+        accept_new_client()
+        process_clients()
+    end)
+    if not ok then
+        Utils.LogError("RCON tick error: " .. tostring(err))
+    end
 end
 
 function RconServer.Stop()

@@ -59,7 +59,7 @@ local function recv_packet(sock)
         if not data then
             if err == "wouldblock" then
                 -- tick server
-                if _G.tick_fn then _G.tick_fn() end
+                RconServer.TickNow()
             else
                 error("recv failed: " .. tostring(err))
             end
@@ -72,7 +72,7 @@ local function recv_packet(sock)
         local data, err = net.receive(sock, 1024)
         if not data then
             if err == "wouldblock" then
-                if _G.tick_fn then _G.tick_fn() end
+                RconServer.TickNow()
             else
                 error("recv failed: " .. tostring(err))
             end
@@ -96,7 +96,7 @@ print("RCON client connected")
 
 -- tick a few times to accept the client
 for i = 1, 10 do
-    if _G.tick_fn then _G.tick_fn() end
+    RconServer.TickNow()
 end
 
 -- Send auth packet
