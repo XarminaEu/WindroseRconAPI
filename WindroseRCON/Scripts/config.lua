@@ -66,9 +66,18 @@ function Config.Load()
     else
         print("[WindroseRCON] config_user.lua not found or invalid, using defaults\n")
     end
+    -- config_user.lua is the source of truth for ports, passwords, and general settings.
+    -- runtime config only overrides whitelist/steam_ids so dashboard edits stay effective.
     local config = DeepMerge(DeepMerge({}, Config.Defaults), user_config)
     local runtime_config = LoadRuntimeConfig(RUNTIME_CONFIG_PATH)
-    config = DeepMerge(config, runtime_config)
+    if runtime_config and runtime_config.admin then
+        if runtime_config.admin.ip_whitelist then
+            config.admin.ip_whitelist = runtime_config.admin.ip_whitelist
+        end
+        if runtime_config.admin.steam_ids then
+            config.admin.steam_ids = runtime_config.admin.steam_ids
+        end
+    end
 
     if not config.admin.password or config.admin.password == "" then
         print("[WindroseRCON] WARNING: admin.password is not set in config_user.lua. Admin commands will be rejected.\n")
