@@ -15,6 +15,7 @@ local Auth = require("auth")
 local CommandRegistry = require("command_registry")
 local Commands = require("commands")
 local RestApi = require("rest_api")
+local HttpServer = require("http_server")
 local net = require("windrose_rcon")
 
 local config = Config.Load()
@@ -30,6 +31,9 @@ Commands.RegisterAll()
 
 RestApi.Start(config, CommandRegistry, Auth)
 net.init()
+
+-- Ensure Data folder exists for runtime config/banlist tests
+os.execute('if not exist "WindroseRCON/Data" mkdir "WindroseRCON/Data"')
 
 local function send_http_request(method, path, body, auth_token)
     local headers = {}
@@ -54,7 +58,7 @@ local function send_http_request(method, path, body, auth_token)
     if not client then error("connect failed: " .. tostring(err)) end
 
     for _ = 1, 5 do
-        if _G.tick_fn then _G.tick_fn() end
+        HttpServer.TickNow(config, CommandRegistry, Auth)
     end
 
     local sent = 0
@@ -65,7 +69,7 @@ local function send_http_request(method, path, body, auth_token)
     end
 
     for _ = 1, 10 do
-        if _G.tick_fn then _G.tick_fn() end
+        HttpServer.TickNow(config, CommandRegistry, Auth)
     end
 
     local response = ""
@@ -73,7 +77,7 @@ local function send_http_request(method, path, body, auth_token)
         local data, rerr = net.receive(client, 4096)
         if not data then
             if rerr == "wouldblock" then
-                if _G.tick_fn then _G.tick_fn() end
+                HttpServer.TickNow(config, CommandRegistry, Auth)
             else
                 break
             end

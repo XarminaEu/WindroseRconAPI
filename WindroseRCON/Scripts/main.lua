@@ -8,6 +8,7 @@ local GameApi = require("game_api")
 local Auth = require("auth")
 local RconServer = require("rcon_server")
 local RestApi = require("rest_api")
+local HttpServer = require("http_server")
 local Discord = require("discord")
 
 local config = Config.Load()
@@ -100,12 +101,18 @@ if not rest_api_started then
     Utils.LogWarn("REST API server failed to start.")
 end
 
-RegisterHook("/Script/Engine.GameEngine:Tick", function()
-    local ok, err = pcall(ProcessCommandFile)
-    if not ok then
-        Utils.LogError("Tick poll error: " .. tostring(err))
+function Tick()
+    local ok1, err1 = pcall(ProcessCommandFile)
+    if not ok1 then
+        Utils.LogError("Tick poll error: " .. tostring(err1))
     end
-end)
+    local ok2, err2 = pcall(function()
+        HttpServer.TickNow(config, CommandRegistry, Auth)
+    end)
+    if not ok2 then
+        Utils.LogError("HTTP tick error: " .. tostring(err2))
+    end
+end
 
 local function TryChatHook(class_name, method_name)
     local full_name = class_name .. ":" .. method_name

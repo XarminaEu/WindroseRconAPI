@@ -16,24 +16,8 @@ local function get_dashboard_dir()
     return dir .. "/dashboard"
 end
 
-local function read_file(path)
-    local file = io.open(path, "r")
-    if not file then return nil end
-    local content = file:read("*a")
-    file:close()
-    return content
-end
-
-local function write_file(path, content)
-    local file = io.open(path, "w")
-    if not file then return false end
-    file:write(content)
-    file:close()
-    return true
-end
-
 local function load_banlist()
-    local content = read_file(BANLIST_PATH)
+    local content = Utils.ReadFile(BANLIST_PATH)
     if not content then return {} end
     local data = Json.Decode(content)
     if type(data) ~= "table" then return {} end
@@ -41,7 +25,7 @@ local function load_banlist()
 end
 
 local function save_banlist(banlist)
-    return write_file(BANLIST_PATH, Json.Encode(banlist))
+    return Utils.WriteFile(BANLIST_PATH, Json.Encode(banlist))
 end
 
 local function generate_token()

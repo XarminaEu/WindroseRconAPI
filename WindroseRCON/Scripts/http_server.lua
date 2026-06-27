@@ -192,17 +192,17 @@ function HttpServer.Start(config, command_registry, auth)
     running = true
     Utils.LogInfo(string.format("HTTP REST API listening on http://%s:%d", host, port))
 
-    RegisterHook("/Script/Engine.GameEngine:Tick", function()
-        if not running then return end
-        local tick_ok, tick_err = pcall(function()
-            HttpServer.Tick(config, command_registry, auth)
-        end)
-        if not tick_ok then
-            Utils.LogError("HTTP tick error: " .. tostring(tick_err))
-        end
-    end)
-
     return true
+end
+
+function HttpServer.TickNow(config, command_registry, auth)
+    if not running then return end
+    local tick_ok, tick_err = pcall(function()
+        HttpServer.Tick(config, command_registry, auth)
+    end)
+    if not tick_ok then
+        Utils.LogError("HTTP tick error: " .. tostring(tick_err))
+    end
 end
 
 function HttpServer.Tick(config, command_registry, auth)

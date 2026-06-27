@@ -1,6 +1,7 @@
 local Config = {}
 
 local Json = require("json")
+local Utils = require("utils")
 local RUNTIME_CONFIG_PATH = "WindroseRCON/Data/config_runtime.json"
 
 Config.Defaults = {
@@ -77,11 +78,7 @@ function Config.Load()
 end
 
 function Config.SaveRuntimeConfig(runtime_config)
-    local file = io.open(RUNTIME_CONFIG_PATH, "w")
-    if not file then return false end
-    file:write(Json.Encode(runtime_config))
-    file:close()
-    return true
+    return Utils.WriteFile(RUNTIME_CONFIG_PATH, Json.Encode(runtime_config))
 end
 
 function Config.LoadRuntimeConfig()

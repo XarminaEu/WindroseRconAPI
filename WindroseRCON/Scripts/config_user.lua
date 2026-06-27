@@ -4,7 +4,7 @@
 return {
     rcon = {
         enabled = true,
-        host = "0.0.0.0",
+        host = "0.0.0.0",  -- Use 0.0.0.0 to bind on all interfaces, or set the server IP. NEVER use 127.0.0.1 or localhost.
         port = 25575,
         password = "",  -- Leave empty to use admin.password. Set separately if you want a different RCON password.
         fallback_file_bridge = true,
@@ -15,14 +15,14 @@ return {
         steam_ids = {
             -- "76561198000000000",
         },
-        -- Add IP addresses that are allowed to use RCON
+        -- Add IP addresses that are allowed to use RCON. Use the server IP, not 127.0.0.1.
         ip_whitelist = {
-            -- "127.0.0.1",
+            -- "192.168.1.100",
         },
     },
     http = {
         enabled = true,
-        host = "0.0.0.0",
+        host = "0.0.0.0",  -- Use 0.0.0.0 to bind on all interfaces, or set the server IP. NEVER use 127.0.0.1 or localhost.
         port = 8780,
     },
     discord = {

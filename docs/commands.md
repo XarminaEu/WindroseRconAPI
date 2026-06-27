@@ -78,11 +78,11 @@ The `admin` username is always required for API login; the password is the `admi
 ### Example
 
 ```bash
-TOKEN=$(curl -s -X POST http://127.0.0.1:8780/api/login \
+TOKEN=$(curl -s -X POST http://<server-ip>:8780/api/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"your-password"}' | jq -r .token)
 
-curl -s -X POST http://127.0.0.1:8780/api/command \
+curl -s -X POST http://<server-ip>:8780/api/command \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"command":"players"}'
@@ -91,9 +91,9 @@ curl -s -X POST http://127.0.0.1:8780/api/command \
 ## RCON Examples
 
 ```bash
-mcrcon -H 127.0.0.1 -P 25575 -p your-password players
-mcrcon -H 127.0.0.1 -P 25575 -p your-password "broadcast Server restart in 5 minutes"
-mcrcon -H 127.0.0.1 -P 25575 -p your-password "give PlayerName Wood 100"
+mcrcon -H <server-ip> -P 25575 -p your-password players
+mcrcon -H <server-ip> -P 25575 -p your-password "broadcast Server restart in 5 minutes"
+mcrcon -H <server-ip> -P 25575 -p your-password "give PlayerName Wood 100"
 ```
 
 ## Console Examples

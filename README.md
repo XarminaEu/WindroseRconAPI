@@ -167,11 +167,11 @@ API endpoints:
 Example:
 
 ```bash
-TOKEN=$(curl -s -X POST http://127.0.0.1:8780/api/login \
+TOKEN=$(curl -s -X POST http://<server-ip>:8780/api/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"your-password"}' | jq -r .token)
 
-curl -s -X POST http://127.0.0.1:8780/api/command \
+curl -s -X POST http://<server-ip>:8780/api/command \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"command":"players"}'
@@ -190,7 +190,7 @@ Set `discord.webhook_url` in `config_user.lua` to forward in-game messages to a 
 Connect with any Source RCON client (e.g., mcrcon, RustAdmin, or a custom script):
 
 ```bash
-mcrcon -H 127.0.0.1 -P 25575 -p your-password "players"
+mcrcon -H <server-ip> -P 25575 -p your-password "players"
 ```
 
 The server runs inside the game process on port `25575` by default.

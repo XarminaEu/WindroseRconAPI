@@ -74,7 +74,14 @@ function Utils.ReadFile(path)
     return content
 end
 
+function Utils.EnsureDir(path)
+    local dir = path:match("^(.*)[/\\]") or ""
+    if dir == "" or Utils.FileExists(dir) then return end
+    os.execute('if not exist "' .. dir .. '" mkdir "' .. dir .. '"')
+end
+
 function Utils.WriteFile(path, content)
+    Utils.EnsureDir(path)
     local file = io.open(path, "w")
     if not file then return false end
     file:write(content)
@@ -83,6 +90,7 @@ function Utils.WriteFile(path, content)
 end
 
 function Utils.AppendFile(path, content)
+    Utils.EnsureDir(path)
     local file = io.open(path, "a")
     if not file then return false end
     file:write(content)
