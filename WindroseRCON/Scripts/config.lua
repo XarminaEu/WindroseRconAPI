@@ -94,6 +94,7 @@ function Config.Load()
     end
 
     print(string.format("[WindroseRCON] Config loaded: RCON %s:%d, HTTP %s:%d\n", config.rcon.host, config.rcon.port, config.http.host, config.http.port))
+    print(string.format("[WindroseRCON] To change these values, edit: %s\n", config_path))
 
     return config
 end
